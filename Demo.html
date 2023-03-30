@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Demo</title>
+    <meta charset="utf-8">
+    <script type="text/javascript" src="https://unpkg.com/axios/dist/axios.min.js"></script>
+	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-aFq/bzH65dt+w6FI2ooMVUpc+21e0SRygnTpmBvdBgSdnuTN7QbdgL+OapgHtvPp" crossorigin="anonymous">
+	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha2/dist/js/bootstrap.bundle.min.js" integrity="sha384-qKXV1j0HvMUeCBQ+QVp7JcfGl760yU08IQ+GpUo5hlbpg51QRiuqHAJz8+BrxE/N" crossorigin="anonymous"></script>
+	<script src="https://code.jquery.com/jquery-3.6.4.min.js" integrity="sha256-oP6HI9z1XaZNBrJURtCoUT5SUnxFr8s3BzRl+cbzUq8=" crossorigin="anonymous"></script>
+</head>
+<body>
+  <div class="container">
+	  <h2>Live DEMO API ICARO</h2>
+	  <nav>
+	  <div class="nav nav-tabs" id="nav-tab" role="tablist">
+		<button class="nav-link active" id="nav-home-tab" data-bs-toggle="tab" data-bs-target="#nav-home" type="button" role="tab" aria-controls="nav-home" aria-selected="true">RemoteCall</button>
+		<button class="nav-link" id="nav-check-tab" data-bs-toggle="tab" data-bs-target="#nav-check" type="button" role="tab" aria-controls="nav-check" aria-selected="false">Check</button>
+	  </div>
+	</nav>
+	<div class="tab-content" id="nav-tabContent">
+	  <div class="tab-pane fade show active" id="nav-home" role="tabpanel" aria-labelledby="nav-home-tab">
+	  	<form class="row g-3">
+		  <div class="col-md-2">
+			<label for="host" class="form-label">HOST</label>
+			<select id="host" class="form-select" onchange="changeHost()">
+			  <option value="local" selected>LOCAL</option>
+			  <option value="pre">PRE</option>
+			</select>
+		  </div>
+		  <div class="col-md-5">
+			<label for="endpoint" class="form-label">Endpoint</label>
+			<input type="text" class="form-control" id="endpoint" required value="http://localhost:8087">
+		  </div>
+		  <div class="col-md-4">
+			<label for="resource" class="form-label">Resource</label>
+			<input type="text" class="form-control" id="resource" disabled value="/icaro/remoteCall/my.json">
+		  </div>
+		  <div class="col-md-1">
+			<label for="method" class="form-label">Method</label>
+			<input type="text" class="form-control" id="method" disabled value="POST">
+		  </div>
+		  <div class="col-md-3">
+			<label for="tipoConsentimiento" class="form-label">Tipo de consentimiento</label>
+			<select id="tipoConsentimiento" class="form-select" onchange="changeTipoConsent()">
+			  <option value="vedacon" selected>Vedacon</option>
+			  <option value="mktCesionNoRenting" >MKT y Cesion</option>
+			  <option value="mktCesionRenting" >MKT y Cesion Renting</option>
+			</select>
+		  </div>
+		  <div class="col-9">
+			<label for="parametros" class="form-label">Parametros json</label>
+			<textarea class="form-control" id="parametros" rows="15"></textarea>
+		  </div>
+		  <div class="col-12 d-md-flex justify-content-md-end">
+			<button type="button" onclick="sendRemoteCall()" class="btn btn-primary">Enviar</button>
+		  </div>
+		</form>
+	  </div>
+	  <div class="tab-pane fade" id="nav-check" role="tabpanel" aria-labelledby="nav-check-tab">
+		<form class="row g-3">
+		  <div class="col-md-2">
+			<label for="hostCheck" class="form-label">HOST</label>
+			<select id="hostCheck" class="form-select" onchange="changeHostCheck()">
+			  <option value="local" selected>LOCAL</option>
+			  <option value="pre">PRE</option>
+			</select>
+		  </div>
+		  <div class="col-md-5">
+			<label for="endPointCheck" class="form-label">Endpoint</label>
+			<input type="text" class="form-control" id="endPointCheck" value="http://localhost:8087">
+		  </div>
+		  <div class="col-md-4">
+			<label for="resourceCheck" class="form-label">Resource</label>
+			<input type="text" class="form-control" id="resourceCheck" disabled value="/icaro/checkRemoteCall/my.json">
+		  </div>
+		  <div class="col-md-1">
+			<label for="methodCheck" class="form-label">Method</label>
+			<input type="text" class="form-control" id="methodCheck" disabled value="POST">
+		  </div>
+		  <div class="col-md-2">
+			<label for="referencia" class="form-label">Referencia</label>
+			<input type="text" class="form-control" id="referencia" value="1">
+		  </div>
+		  <div class="col-12 d-md-flex justify-content-md-end">
+			<button type="button" onclick="sendCheck()" class="btn btn-primary">Enviar</button>
+		  </div>
+		</form>
+	  </div>
+	</div>
+	<br>
+	<p>
+	<div id="liveAlertPlaceholder"></div>
+	<div class="col-12" id="respuestaRemoteCall">
+	  <a class="link-offset-2 link-underline link-underline-opacity-0" data-bs-toggle="collapse" href="#collapseResponse" aria-expanded="false" aria-controls="collapseResponse">
+		Respuesta
+	  </a>
+	  </p>
+		<div class="collapse" id="collapseResponse">
+		  <div class="card card-body">
+			<textarea class="form-control" id="respuesta" rows="15" disabled></textarea>
+		  </div>
+		</div>
+	</div>
+  </div>
+
+
+	
+	<script type="text/javascript">
+	const request =  {
+	  country: "ES",
+	  operation: null,
+	  serviceName: "CONSENT_SALESFORCE"
+	};
+
+	const check = {
+		reference : "0"
+	}
+	
+	const consentimientoVedaconJson = `{
+"App__c": "Abaco",
+"Chanel__c": "On-site",
+"Journey_Stage__c" : "Request",
+"RCILeadExtID__c" : "25717440J",
+"ContractType__c" : "Firma priva-pol",
+"FirstName" : "Jesus",
+"LastName" : "Romero",
+"Phone__c" : "666123456",
+"OptInVedaconSVEFI__c" : "Si",
+"OptInVedaconSVEFIIDate__c": "2023-03-21"
+}`;
+
+	const consentimientoMktCesionJson = `{
+"App__c": "Abaco",
+"Chanel__c": "On-site",
+"Journey_Stage__c" : "Request",
+"RCILeadExtID__c" : "25717440J",
+"ContractType__c" : "Firma priva-pol",
+"FirstName" : "Jesus",
+"LastName" : "Romero",
+"Phone__c" : "666123456",
+"OptInGDPRMarketingRCI__c" : "Si",
+"OptInGDPRMarketingRCIIDate__c": "2023-03-21",
+"OptInGDPRCesionRCI__c" : "Si",
+"OptInGDPRCesionRCIIDate__c": "2023-03-21"
+}`;
+
+	const consentimientoMktCesionRentingJson = `{
+"App__c": "Abaco",
+"Chanel__c": "On-site",
+"Journey_Stage__c" : "Request",
+"RCILeadExtID__c" : "25717440J",
+"ContractType__c" : "Firma priva-pol",
+"FirstName" : "Jesus",
+"LastName" : "Romero",
+"Phone__c" : "666123456",
+"OptInGDPRMarketingOver__c" : "Si",
+"OptInGDPRMarketingOverIDate__c": "2023-03-19",
+"OptInGDPRCesionOver__c" : "Si",
+"OptInGDPRCesionOverIDate__c": "2023-03-19"
+}`;
+
+	function changeHost() {
+	  var host = document.getElementById('host');
+	  var endpoint = document.getElementById('endpoint');
+	  var ambiente = host.value;
+	  if(ambiente =='local'){
+		endpoint.value = "http://localhost:8087";
+	  }
+	  if(ambiente =='pre'){
+		endpoint.value = "http://10.216.176.66:60460";
+	  }
+	  var hostCheck = document.getElementById('hostCheck');
+	  hostCheck.value = ambiente;
+	  hostCheck.onchange();
+	}
+	
+	function changeHostCheck() {
+	  var hostCheck = document.getElementById('hostCheck');
+	  var endpointCheck = document.getElementById('endPointCheck');
+	  var ambiente = hostCheck.value;
+	  if(ambiente =='local'){
+		endpointCheck.value = "http://localhost:8087";
+	  }
+	  if(ambiente =='pre'){
+		endpointCheck.value = "http://10.216.176.66:60460";
+	  }
+	  
+	}
+	
+	function changeTipoConsent(){
+		var tipoConsentimiento = document.getElementById('tipoConsentimiento');
+		var parametros = document.getElementById('parametros');
+		var tipo = tipoConsentimiento.value;
+		if(tipo == 'vedacon'){
+			parametros.value = consentimientoVedaconJson;
+		}
+		if(tipo == 'mktCesionNoRenting'){
+			parametros.value = consentimientoMktCesionJson;
+		}
+		if(tipo == 'mktCesionRenting'){
+			parametros.value = consentimientoMktCesionRentingJson;
+		}
+		
+	}
+	
+	function sendRemoteCall(){
+		var endpoint = document.getElementById('endpoint');
+		var resource = document.getElementById('resource');
+		var method = document.getElementById('method');
+		var parametros = document.getElementById('parametros');
+		var respuesta = document.getElementById('respuesta');
+		var referencia = document.getElementById('referencia');
+		var url_post = endpoint.value + resource.value;
+
+		const operation = JSON.parse(parametros.value);
+		request.operation = JSON.stringify(operation);
+		var peticionPost = JSON.stringify(request);
+		console.log(JSON.stringify(peticionPost));
+		
+		$.ajax({
+			type:method.value,
+			url:url_post,
+			data:peticionPost,
+
+			success:function(datos){
+				var response = JSON.stringify(datos);
+				respuesta.value = response;
+				var numeroRefer = datos.IcaroResponse.reference;
+				referencia.value = numeroRefer;
+				alert("Petición RemoteCall realizada correctamente. El número de referencia es: " + numeroRefer, 'success');
+				var estado = datos.IcaroResponse.state;
+				if(estado=='waiting'){
+					alert("Su petición se encuentra siendo procesada. ", 'warning');
+				}
+
+				$('#nav-tab button[data-bs-target="#nav-check"]').tab('show');
+				$("#collapseResponse").collapse("show");
+				console.log(response);
+			 },
+			error: function (request, status, error) {
+				var response = JSON.stringify(error);
+				respuesta.value = response;
+				alert("Error en la petición RemoteCall.", 'danger');
+				console.log(request);
+				console.log(status);
+				console.log(error);
+
+			},
+			dataType: "json"
+		});
+  
+	}
+
+	function sendCheck(){
+		var endpoint = document.getElementById('endPointCheck');
+		var resource = document.getElementById('resourceCheck');
+		var metodo = document.getElementById('methodCheck');
+		var referencia = document.getElementById('referencia');
+		var respuesta = document.getElementById('respuesta');
+		var url_post = endpoint.value + resource.value;
+
+		check.reference = referencia.value;
+		var peticionPost = JSON.stringify(check);
+		console.log(JSON.stringify(peticionPost));
+
+		$.ajax({
+			type:metodo.value,
+			url:url_post,
+			data:peticionPost,
+
+			success:function(datos){
+				respuesta.value = JSON.stringify(datos);
+
+				var estado = datos.IcaroResponse.state;
+				if(estado=='waiting'){
+					alert("Su petición todavía se encuentra siendo procesada. ", 'warning');
+				} else if(estado=='completed'){
+					var response = JSON.parse(datos.IcaroResponse.response);
+					var codigoRespuesta =  response.responseCode;
+					var mensaje = response.response;
+					if(codigoRespuesta==201){
+						alert("Su petición ha terminado exitosamente. Mensaje: "+mensaje, 'success');
+					} else if(codigoRespuesta==200){
+						alert("Su petición ha terminado exitosamente. Registro actualizado: "+JSON.parse(mensaje).id, 'success');
+					} else if(codigoRespuesta==400){
+						alert("Su petición ha terminado con errores. Detalle: " + JSON.parse(mensaje)[0].message, 'danger');
+					}else if(codigoRespuesta==500){
+						alert("Su petición ha terminado con errores. Detalle: " + mensaje, 'danger');
+					}else {
+						alert("Su petición ha terminado, pero no se ha identificado el código de respuesta.", 'info');
+					}
+				} else if(estado=='error'){
+					var errores = datos.IcaroResponse.error_description;
+					alert("Su petición ha terminado con errores. Detalle: " + errores, 'danger');
+				} else{
+					alert("No se ha podido identificar el estado de su petición ", 'info');
+				}
+				$("#collapseResponse").collapse("show");
+
+				console.log(response);
+			},
+			error: function (request, status, error) {
+				var response = JSON.stringify(error);
+				respuesta.value = response;
+				alert("Error en la petición Check.", 'danger');
+				console.log(request);
+				console.log(status);
+				console.log(error);
+			},
+			dataType: "json"
+		});
+	}
+
+	const alert = (message, type) => {
+		const wrapper = document.createElement('div')
+		wrapper.innerHTML = [
+			`<div class="alert alert-${type} alert-dismissible fade show" role="alert">`,
+			`   <div>${message}</div>`,
+			'   <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>',
+			'</div>'
+		].join('')
+
+		const alertPlaceholder = document.getElementById('liveAlertPlaceholder');
+		alertPlaceholder.append(wrapper)
+	}
+	
+	function postFetch(){
+		fetch(url_post, {
+			method: metodo.value,
+			headers: {
+				"Content-Type": "application/json",
+			},
+			body: peticionPost
+		})
+				.then((response) => {
+					var response = JSON.stringify(response);
+					respuesta.value = response;
+					console.log("Success:", response);
+				})
+				.catch((error) => {
+					var response = JSON.stringify(error);
+					respuesta.value = response;
+					console.log("Error:", response);
+				});
+	}
+	
+	function postAxios(){
+		axios.post(url_post, peticionPost, {
+			headers: {
+				"Content-Type": "application/json",
+				"credentials": "omit"
+			}
+		} )
+				.then(function (response) {
+					var response = JSON.stringify(response);
+					respuesta.value = response;
+					console.log("Success:", response);
+				})
+				.catch(function (error) {
+					var response = JSON.stringify(error);
+					respuesta.value = response;
+					console.log("Error:", response);
+				});
+	}
+	parametros.value = consentimientoVedaconJson;
+
+	</script>
+</body>
+</html>
